@@ -36,12 +36,33 @@ func Start(in io.Reader, out io.Writer) {
 					unquote(y);
 				});
 			};
-		`
+			`
 
 		l := lexer.New(input)
 		p := parser.New(l)
 		program := p.ParseProgram()
 		evaluator.DefineMacros(program, macroEnv)
+	}
+
+	{
+		input := `
+			let map = fn(arr, f) {
+				let iter = fn(arr, accumulated) {
+					if (len(arr) == 0) {
+						accumulated
+					} else {
+						iter(rest(arr), push(accumulated, f(first(arr))));
+					}
+				};
+
+				iter(arr, []);
+			};
+			`
+
+		l := lexer.New(input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		evaluator.Eval(program, env)
 	}
 
 	for {
@@ -63,8 +84,6 @@ func Start(in io.Reader, out io.Writer) {
 
 		evaluator.DefineMacros(program, macroEnv)
 		expanded := evaluator.ExpandMacros(program, macroEnv)
-
-		// io.WriteString(out, expanded.String())
 
 		evaluated := evaluator.Eval(expanded, env)
 		if evaluated != nil {
